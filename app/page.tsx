@@ -9,6 +9,7 @@ export default function Home() {
   const [isXNext, setIsXNext] = useState(true);
   const [winner, setWinner] = useState<Player | 'draw' | null>(null);
   const [winningLine, setWinningLine] = useState<number[]>([]);
+  const [showModal, setShowModal] = useState(false);
 
   const calculateWinner = (squares: Player[]): { winner: Player | null; line: number[] } => {
     // 4x4 棋盤的索引:
@@ -65,8 +66,14 @@ export default function Home() {
     if (result.winner) {
       setWinner(result.winner);
       setWinningLine(result.line);
+      setTimeout(() => {
+        setShowModal(true);
+      }, 3000);
     } else if (newBoard.every((square) => square !== null)) {
       setWinner('draw');
+      setTimeout(() => {
+        setShowModal(true);
+      }, 3000);
     } else {
       setIsXNext(!isXNext);
     }
@@ -77,6 +84,7 @@ export default function Home() {
     setIsXNext(true);
     setWinner(null);
     setWinningLine([]);
+    setShowModal(false);
   };
 
   const getStatusMessage = () => {
@@ -129,7 +137,7 @@ export default function Home() {
           </button>
         </div>
 
-        {winner && (
+        {winner && showModal && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center">
             <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 text-center shadow-2xl">
               <div className="text-6xl mb-4">
