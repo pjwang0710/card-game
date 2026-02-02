@@ -5,24 +5,48 @@ import { useState } from 'react';
 type Player = 'X' | 'O' | null;
 
 export default function Home() {
-  const [board, setBoard] = useState<Player[]>(Array(9).fill(null));
+  const [board, setBoard] = useState<Player[]>(Array(16).fill(null));
   const [isXNext, setIsXNext] = useState(true);
   const [winner, setWinner] = useState<Player | 'draw' | null>(null);
 
   const calculateWinner = (squares: Player[]): Player | null => {
+    // 4x4 棋盤的索引:
+    // 0  1  2  3
+    // 4  5  6  7
+    // 8  9  10 11
+    // 12 13 14 15
+
     const lines = [
-      [0, 1, 2],
-      [3, 4, 5],
-      [6, 7, 8],
-      [0, 3, 6],
-      [1, 4, 7],
-      [2, 5, 8],
-      [0, 4, 8],
-      [2, 4, 6],
+      // 橫線
+      [0, 1, 2, 3],
+      [4, 5, 6, 7],
+      [8, 9, 10, 11],
+      [12, 13, 14, 15],
+
+      // 直線
+      [0, 4, 8, 12],
+      [1, 5, 9, 13],
+      [2, 6, 10, 14],
+      [3, 7, 11, 15],
+
+      // 斜線
+      [0, 5, 10, 15],
+      [3, 6, 9, 12],
+
+      // 正方形 (2x2)
+      [0, 1, 4, 5],
+      [1, 2, 5, 6],
+      [2, 3, 6, 7],
+      [4, 5, 8, 9],
+      [5, 6, 9, 10],
+      [6, 7, 10, 11],
+      [8, 9, 12, 13],
+      [9, 10, 13, 14],
+      [10, 11, 14, 15],
     ];
 
-    for (const [a, b, c] of lines) {
-      if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+    for (const [a, b, c, d] of lines) {
+      if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c] && squares[a] === squares[d]) {
         return squares[a];
       }
     }
@@ -47,7 +71,7 @@ export default function Home() {
   };
 
   const resetGame = () => {
-    setBoard(Array(9).fill(null));
+    setBoard(Array(16).fill(null));
     setIsXNext(true);
     setWinner(null);
   };
@@ -71,7 +95,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 max-w-md mx-auto mb-8">
+        <div className="grid grid-cols-4 gap-4 max-w-xl mx-auto mb-8">
           {board.map((cell, index) => (
             <button
               key={index}
