@@ -8,8 +8,9 @@ export default function Home() {
   const [board, setBoard] = useState<Player[]>(Array(16).fill(null));
   const [isXNext, setIsXNext] = useState(true);
   const [winner, setWinner] = useState<Player | 'draw' | null>(null);
+  const [winningLine, setWinningLine] = useState<number[]>([]);
 
-  const calculateWinner = (squares: Player[]): Player | null => {
+  const calculateWinner = (squares: Player[]): { winner: Player | null; line: number[] } => {
     // 4x4 棋盤的索引:
     // 0  1  2  3
     // 4  5  6  7
@@ -47,10 +48,10 @@ export default function Home() {
 
     for (const [a, b, c, d] of lines) {
       if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c] && squares[a] === squares[d]) {
-        return squares[a];
+        return { winner: squares[a], line: [a, b, c, d] };
       }
     }
-    return null;
+    return { winner: null, line: [] };
   };
 
   const handleClick = (index: number) => {
@@ -60,9 +61,10 @@ export default function Home() {
     newBoard[index] = isXNext ? 'X' : 'O';
     setBoard(newBoard);
 
-    const gameWinner = calculateWinner(newBoard);
-    if (gameWinner) {
-      setWinner(gameWinner);
+    const result = calculateWinner(newBoard);
+    if (result.winner) {
+      setWinner(result.winner);
+      setWinningLine(result.line);
     } else if (newBoard.every((square) => square !== null)) {
       setWinner('draw');
     } else {
@@ -74,6 +76,7 @@ export default function Home() {
     setBoard(Array(16).fill(null));
     setIsXNext(true);
     setWinner(null);
+    setWinningLine([]);
   };
 
   const getStatusMessage = () => {
@@ -83,54 +86,61 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 to-purple-900 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-8">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-5xl font-bold text-white text-center mb-8 drop-shadow-lg">
-          ⭕ 圈圈叉叉 ❌
+        <h1 className="text-5xl font-bold text-slate-100 text-center mb-8 drop-shadow-2xl tracking-tight">
+          圈圈叉叉
         </h1>
 
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-8">
-          <div className="text-white text-3xl font-bold text-center">
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 mb-8 border border-slate-700/50">
+          <div className="text-slate-100 text-3xl font-bold text-center">
             {getStatusMessage()}
           </div>
         </div>
 
         <div className="grid grid-cols-4 gap-4 max-w-xl mx-auto mb-8">
-          {board.map((cell, index) => (
-            <button
-              key={index}
-              onClick={() => handleClick(index)}
-              className={`aspect-square bg-white/90 rounded-xl shadow-lg flex items-center justify-center text-6xl font-bold transition-all hover:scale-105 ${
-                cell === 'X' ? 'text-blue-600' : 'text-red-600'
-              } ${!cell && !winner ? 'hover:bg-white' : ''}`}
-              disabled={!!cell || !!winner}
-            >
-              {cell}
-            </button>
-          ))}
+          {board.map((cell, index) => {
+            const isWinningCell = winningLine.includes(index);
+            return (
+              <button
+                key={index}
+                onClick={() => handleClick(index)}
+                className={`aspect-square rounded-lg shadow-xl flex items-center justify-center text-6xl font-bold transition-all border ${
+                  isWinningCell
+                    ? 'bg-amber-500 border-amber-400 animate-pulse scale-110 shadow-amber-500/50'
+                    : 'bg-slate-800 border-slate-700 hover:scale-105 hover:bg-slate-750'
+                } ${cell === 'X' ? 'text-cyan-400' : cell === 'O' ? 'text-rose-400' : 'text-slate-600'} ${
+                  !cell && !winner ? 'hover:border-slate-600' : ''
+                }`}
+                disabled={!!cell || !!winner}
+              >
+                {cell}
+              </button>
+            );
+          })}
         </div>
 
         <div className="text-center">
           <button
             onClick={resetGame}
-            className="bg-white text-purple-700 px-8 py-3 rounded-lg font-bold text-lg hover:bg-purple-100 transition-colors shadow-lg"
+            className="bg-slate-700 text-slate-100 px-8 py-3 rounded-lg font-bold text-lg hover:bg-slate-600 transition-all shadow-lg border border-slate-600 hover:shadow-xl"
           >
             重新開始
           </button>
         </div>
 
         {winner && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-            <div className="bg-white rounded-2xl p-8 text-center">
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center">
+            <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 text-center shadow-2xl">
               <div className="text-6xl mb-4">
                 {winner === 'draw' ? '🤝' : '🎉'}
               </div>
-              <h2 className="text-3xl font-bold text-purple-700 mb-4">
+              <h2 className="text-3xl font-bold text-slate-100 mb-4">
                 {winner === 'draw' ? '平手！' : `${winner} 獲勝！`}
               </h2>
               <button
                 onClick={resetGame}
-                className="bg-purple-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-purple-700 transition-colors mt-4"
+                className="bg-slate-700 text-slate-100 px-8 py-3 rounded-lg font-bold hover:bg-slate-600 transition-all mt-4 border border-slate-600"
               >
                 再玩一次
               </button>
