@@ -1,178 +1,112 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Card from '@/components/Card';
+import { useState } from 'react';
 
-interface GameCard {
-  id: number;
-  suit: '♠' | '♥' | '♦' | '♣';
-  rank: string;
-  isFlipped: boolean;
-  isMatched: boolean;
-}
+type Player = 'X' | 'O' | null;
 
 export default function Home() {
-  const [cards, setCards] = useState<GameCard[]>([]);
-  const [flippedCards, setFlippedCards] = useState<number[]>([]);
-  const [matchedPairs, setMatchedPairs] = useState(0);
-  const [moves, setMoves] = useState(0);
+  const [board, setBoard] = useState<Player[]>(Array(9).fill(null));
+  const [isXNext, setIsXNext] = useState(true);
+  const [winner, setWinner] = useState<Player | 'draw' | null>(null);
 
-  // Initialize game
-  useEffect(() => {
-    initializeGame();
-  }, []);
+  const calculateWinner = (squares: Player[]): Player | null => {
+    const lines = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [0, 4, 8],
+      [2, 4, 6],
+    ];
 
-  // Check for matches
-  useEffect(() => {
-    if (flippedCards.length === 2) {
-      const [first, second] = flippedCards;
-      const firstCard = cards.find((c) => c.id === first);
-      const secondCard = cards.find((c) => c.id === second);
-
-      if (
-        firstCard &&
-        secondCard &&
-        firstCard.suit === secondCard.suit &&
-        firstCard.rank === secondCard.rank
-      ) {
-        // Match found
-        setCards((prev) =>
-          prev.map((card) =>
-            card.id === first || card.id === second
-              ? { ...card, isMatched: true }
-              : card
-          )
-        );
-        setMatchedPairs((prev) => prev + 1);
-        setFlippedCards([]);
-      } else {
-        // No match
-        setTimeout(() => {
-          setCards((prev) =>
-            prev.map((card) =>
-              card.id === first || card.id === second
-                ? { ...card, isFlipped: false }
-                : card
-            )
-          );
-          setFlippedCards([]);
-        }, 1000);
+    for (const [a, b, c] of lines) {
+      if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+        return squares[a];
       }
-      setMoves((prev) => prev + 1);
     }
-  }, [flippedCards, cards]);
-
-  const initializeGame = () => {
-    const suits: Array<'♠' | '♥' | '♦' | '♣'> = ['♠', '♥', '♦', '♣'];
-    const ranks = ['A', '2', '3', '4', '5', '6', '7', '8'];
-
-    const cardPairs: GameCard[] = [];
-    let id = 0;
-
-    // Create 8 pairs of cards
-    for (let i = 0; i < 8; i++) {
-      const suit = suits[Math.floor(i / 2)];
-      const rank = ranks[i];
-
-      cardPairs.push({
-        id: id++,
-        suit,
-        rank,
-        isFlipped: false,
-        isMatched: false,
-      });
-
-      cardPairs.push({
-        id: id++,
-        suit,
-        rank,
-        isFlipped: false,
-        isMatched: false,
-      });
-    }
-
-    // Shuffle cards
-    const shuffled = cardPairs.sort(() => Math.random() - 0.5);
-    setCards(shuffled);
-    setFlippedCards([]);
-    setMatchedPairs(0);
-    setMoves(0);
+    return null;
   };
 
-  const handleCardClick = (id: number) => {
-    const card = cards.find((c) => c.id === id);
+  const handleClick = (index: number) => {
+    if (board[index] || winner) return;
 
-    if (
-      !card ||
-      card.isMatched ||
-      card.isFlipped ||
-      flippedCards.length >= 2
-    ) {
-      return;
+    const newBoard = [...board];
+    newBoard[index] = isXNext ? 'X' : 'O';
+    setBoard(newBoard);
+
+    const gameWinner = calculateWinner(newBoard);
+    if (gameWinner) {
+      setWinner(gameWinner);
+    } else if (newBoard.every((square) => square !== null)) {
+      setWinner('draw');
+    } else {
+      setIsXNext(!isXNext);
     }
+  };
 
-    setCards((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, isFlipped: true } : c))
-    );
+  const resetGame = () => {
+    setBoard(Array(9).fill(null));
+    setIsXNext(true);
+    setWinner(null);
+  };
 
-    setFlippedCards((prev) => [...prev, id]);
+  const getStatusMessage = () => {
+    if (winner === 'draw') return '平手！';
+    if (winner) return `${winner} 獲勝！`;
+    return `輪到：${isXNext ? 'X' : 'O'}`;
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-800 to-green-600 p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 to-purple-900 p-8">
+      <div className="max-w-2xl mx-auto">
         <h1 className="text-5xl font-bold text-white text-center mb-8 drop-shadow-lg">
-          🃏 記憶卡牌遊戲
+          ⭕ 圈圈叉叉 ❌
         </h1>
 
         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-8">
-          <div className="flex justify-around text-white text-xl">
-            <div className="text-center">
-              <div className="font-bold text-3xl">{moves}</div>
-              <div className="text-sm opacity-80">移動次數</div>
-            </div>
-            <div className="text-center">
-              <div className="font-bold text-3xl">{matchedPairs}/8</div>
-              <div className="text-sm opacity-80">配對成功</div>
-            </div>
+          <div className="text-white text-3xl font-bold text-center">
+            {getStatusMessage()}
           </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-4 mb-8 max-w-2xl mx-auto">
-          {cards.map((card) => (
-            <div key={card.id} className="flex justify-center">
-              <Card
-                suit={card.suit}
-                rank={card.rank}
-                isFlipped={card.isFlipped || card.isMatched}
-                onClick={() => handleCardClick(card.id)}
-              />
-            </div>
+        <div className="grid grid-cols-3 gap-4 max-w-md mx-auto mb-8">
+          {board.map((cell, index) => (
+            <button
+              key={index}
+              onClick={() => handleClick(index)}
+              className={`aspect-square bg-white/90 rounded-xl shadow-lg flex items-center justify-center text-6xl font-bold transition-all hover:scale-105 ${
+                cell === 'X' ? 'text-blue-600' : 'text-red-600'
+              } ${!cell && !winner ? 'hover:bg-white' : ''}`}
+              disabled={!!cell || !!winner}
+            >
+              {cell}
+            </button>
           ))}
         </div>
 
         <div className="text-center">
           <button
-            onClick={initializeGame}
-            className="bg-white text-green-700 px-8 py-3 rounded-lg font-bold text-lg hover:bg-green-100 transition-colors shadow-lg"
+            onClick={resetGame}
+            className="bg-white text-purple-700 px-8 py-3 rounded-lg font-bold text-lg hover:bg-purple-100 transition-colors shadow-lg"
           >
             重新開始
           </button>
         </div>
 
-        {matchedPairs === 8 && (
+        {winner && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
             <div className="bg-white rounded-2xl p-8 text-center">
-              <div className="text-6xl mb-4">🎉</div>
-              <h2 className="text-3xl font-bold text-green-700 mb-4">
-                恭喜過關！
+              <div className="text-6xl mb-4">
+                {winner === 'draw' ? '🤝' : '🎉'}
+              </div>
+              <h2 className="text-3xl font-bold text-purple-700 mb-4">
+                {winner === 'draw' ? '平手！' : `${winner} 獲勝！`}
               </h2>
-              <p className="text-xl mb-6">
-                你用了 <span className="font-bold text-green-600">{moves}</span> 步完成遊戲
-              </p>
               <button
-                onClick={initializeGame}
-                className="bg-green-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-green-700 transition-colors"
+                onClick={resetGame}
+                className="bg-purple-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-purple-700 transition-colors mt-4"
               >
                 再玩一次
               </button>
